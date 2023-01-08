@@ -4,29 +4,33 @@ import java.net.URI
 plugins {
   `java-gradle-plugin`
   `kotlin-dsl`
-  alias(libs.plugins.kotlin)
   `maven-publish`
-  alias(libs.plugins.downloaddeps)
+  alias(libs.plugins.downloaddependencies)
+  alias(libs.plugins.dependencyanalysis)
+  alias(libs.plugins.kotlinter)
+  alias(libs.plugins.versions)
 }
+
+group = "uk.org.lidalia.gradle.plugin"
 
 repositories {
   mavenCentral()
-  gradlePluginPortal()
 }
 
 dependencies {
-  api(libs.gradle.plugin.idea.ext)
-  testImplementation(libs.bundles.kotest)
-  testImplementation(libs.gradle.plugin.kotlin.jvm)
+  implementation(libs.gradle.plugin.kotlin.jvm)
+  implementation(libs.gradle.plugin.kotlin.api)
+
+//  testImplementation(libs.bundles.kotest)
 }
 
 gradlePlugin {
   // Define the plugin
   @Suppress("UNUSED_VARIABLE")
-  val ideaExt by plugins.creating {
-    id = "uk.org.lidalia.ideaext"
+  val kotlinFlat by plugins.creating {
+    id = "uk.org.lidalia.kotlinflat"
     version = "0.1.0"
-    implementationClass = "uk.org.lidalia.gradle.plugin.ideaext.LidaliaIdeaExtPlugin"
+    implementationClass = "uk.org.lidalia.gradle.plugin.kotlinflat.LidaliaKotlinFlatPlugin"
   }
 }
 
@@ -65,4 +69,23 @@ tasks.named<Task>("check") {
 
 tasks.withType<Test>().configureEach {
   useJUnitPlatform()
+}
+
+tasks {
+  check {
+    dependsOn("buildHealth")
+    dependsOn("installKotlinterPrePushHook")
+  }
+}
+
+dependencyAnalysis {
+  issues {
+    // configure for all projects
+    all {
+      // set behavior for all issue types
+      onAny {
+        severity("fail")
+      }
+    }
+  }
 }
